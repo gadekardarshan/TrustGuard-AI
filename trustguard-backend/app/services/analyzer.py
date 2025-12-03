@@ -23,19 +23,33 @@ class Analyzer:
         # 2. Rules Engine Analysis
         rules_data = self.rules_engine.analyze(request.text or "")
         
-        # 3. LLM Semantic Analysis
-        context = ""
+        # 3. Context Building (LinkedIn + Resume)
+        context_parts = []
         user_analysis_result = None
+        
+        # LinkedIn
         if request.linkedin_profile_url:
              user_profile = self.linkedin_service.extract_profile(request.linkedin_profile_url)
              if user_profile:
-                 # We can pass this to LLM
-                 context = f"User Profile: {user_profile}"
-                 user_analysis_result = {"profile_found": True, "context": context}
+                 context_parts.append(f"LinkedIn Profile: {user_profile}")
+                 user_analysis_result = {"profile_found": True, "source": "LinkedIn"}
+        
+        # Resume PDF
+        if request.resume_text:
+            # Truncate resume text to avoid token limits (e.g., first 3000 chars)
+            truncated_resume = request.resume_text[:3000]
+            context_parts.append(f"Resume Text (Extracted): {truncated_resume}")
+            if not user_analysis_result:
+                user_analysis_result = {"profile_found": True, "source": "Resume PDF"}
+            else:
+                user_analysis_result["source"] += " + Resume PDF"
 
-        llm_data = self.llm_client.analyze(request.text or "", context)
+        full_context = "\n\n".join(context_parts)
 
-        # 4. Scoring Engine
+        # 4. LLM Semantic Analysis
+        llm_data = self.llm_client.analyze(request.text or "", full_context)
+
+        # 5. Scoring Engine
         from app.services.scoring_engine import ScoringEngine
         scoring_engine = ScoringEngine()
         
@@ -57,6 +71,10 @@ class Analyzer:
         if llm_data.get("hidden_fees"): all_reasons.append("AI detected hidden fees")
         if llm_data.get("unrealistic_salary"): all_reasons.append("AI detected unrealistic salary")
         if llm_data.get("company_unclear"): all_reasons.append("AI detected unclear company identity")
+
+        # Structured Logging (Privacy Aware)
+        print(f"Analysis Log: JobURL={bool(request.url)}, JobText={bool(request.text)}, LinkedIn={bool(request.linkedin_profile_url)}, Resume={bool(request.resume_text)}")
+        print(f"Result: Score={score_result['final_score']}, Label={score_result['risk_level']}")
 
         return AnalyzeResponse(
             trust_score=score_result["final_score"],

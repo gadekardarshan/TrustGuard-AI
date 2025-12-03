@@ -1,22 +1,27 @@
 'use client';
-
 import { useState } from 'react';
-import { analyzeContent, AnalyzeResponse } from './utils/api';
+import { analyzeScam, AnalyzeResponse } from './utils/api';
 import TrustScore from '@/components/TrustScore';
 import { Shield, Search, AlertCircle, Loader2, Link as LinkIcon, FileText } from 'lucide-react';
 
 export default function Home() {
-  const [url, setUrl] = useState('');
-  const [text, setText] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleAnalyze = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url && !text) {
-      setError('Please provide either a URL or Text to analyze.');
+  const handleAnalyze = async () => {
+    // Frontend Validation
+    if (!jobUrl && !jobDescription) {
+      setError('Please provide either a Job URL or Job Description.');
+      return;
+    }
+    if (!linkedinUrl && !resumeFile) {
+      setError('Please provide either a LinkedIn URL or upload a Resume PDF.');
       return;
     }
 
@@ -24,118 +29,152 @@ export default function Home() {
     setError('');
     setResult(null);
 
+    const formData = new FormData();
+    if (jobUrl) formData.append('job_url', jobUrl);
+    if (jobDescription) formData.append('job_description', jobDescription);
+    if (linkedinUrl) formData.append('linkedin_url', linkedinUrl);
+    if (resumeFile) formData.append('resume_file', resumeFile);
+
     try {
-      const data = await analyzeContent(url, text, linkedinUrl);
+      const data = await analyzeScam(formData);
       setResult(data);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || 'An error occurred during analysis.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen p-4 md:p-8 lg:p-12 max-w-5xl mx-auto">
-      {/* Header */}
-      <header className="mb-12 text-center space-y-4">
-        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-500/10 text-indigo-400 mb-4 ring-1 ring-indigo-500/20">
-          <Shield size={32} />
+    <main className="min-h-screen bg-slate-950 text-white p-8 font-sans">
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-12 text-center">
+          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-4">
+            TrustGuard AI
+          </h1>
+          <p className="text-slate-400 text-lg">
+            Advanced Scam Detection for Job Seekers. Analyze job posts and verify safety instantly.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          {/* Section 1: Job Information */}
+          <section className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm">
+            <h2 className="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+              <span>💼</span> Job Information
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Job Posting URL</label>
+                <input
+                  type="url"
+                  placeholder="https://linkedin.com/jobs/..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  value={jobUrl}
+                  onChange={(e) => setJobUrl(e.target.value)}
+                />
+                <p className="text-xs text-slate-500 mt-1">Paste the link to the job posting.</p>
+              </div>
+
+              <div className="text-center text-slate-600 text-sm">- OR -</div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Job Description</label>
+                <textarea
+                  placeholder="Paste the full job description text here..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all h-32 resize-none"
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: Your Information */}
+          <section className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm">
+            <h2 className="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+              <span>👤</span> Your Context
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">LinkedIn Profile URL</label>
+                <input
+                  type="url"
+                  placeholder="https://linkedin.com/in/your-profile"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                />
+                <p className="text-xs text-slate-500 mt-1">Used to check if the job matches your profile level.</p>
+              </div>
+
+              <div className="text-center text-slate-600 text-sm">- OR -</div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Upload Resume (PDF)</label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="block w-full text-sm text-slate-400
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-emerald-500/10 file:text-emerald-400
+                      hover:file:bg-emerald-500/20
+                      cursor-pointer"
+                    onChange={(e) => setResumeFile(e.target.files ? e.target.files[0] : null)}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Max 5MB. Only used for analysis, not stored.</p>
+              </div>
+            </div>
+          </section>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
-          TrustGuard AI
-        </h1>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          Instant scam detection for job posts, websites, and messages.
-          Powered by AI to protect you from fraud.
-        </p>
-      </header>
 
-      {/* Analysis Form */}
-      <div className="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        <form onSubmit={handleAnalyze} className="space-y-6">
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <LinkIcon size={16} />
-                Website / Job URL (Optional)
-              </label>
-              <input
-                type="url"
-                placeholder="https://example.com/job-post"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <LinkIcon size={16} className="text-blue-400" />
-                Your LinkedIn Profile (Optional)
-              </label>
-              <input
-                type="url"
-                placeholder="https://linkedin.com/in/your-profile"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-600"
-              />
-              <p className="text-xs text-slate-500">
-                Used to check if the job is a realistic match for your profile.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <FileText size={16} />
-              Job Description / Message Text
-            </label>
-            <textarea
-              rows={5}
-              placeholder="Paste the job description, email content, or WhatsApp message here..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-600 resize-y"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-4 rounded-xl transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={20} className="animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Search size={20} />
-                Check Trust Score
-              </>
-            )}
-          </button>
-        </form>
-
+        {/* Error Message */}
         {error && (
-          <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 animate-in fade-in">
-            <AlertCircle size={20} />
-            <p>{error}</p>
+          <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl mb-6 text-center animate-pulse">
+            ⚠️ {error}
           </div>
         )}
+
+        {/* Analyze Button */}
+        <div className="text-center mb-12">
+          <button
+            onClick={handleAnalyze}
+            disabled={loading}
+            className={`
+              px-8 py-4 rounded-full text-lg font-bold shadow-lg transition-all transform hover:scale-105
+              ${loading
+                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white shadow-blue-500/25'}
+            `}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2 justify-center">
+                <Loader2 className="animate-spin h-5 w-5 text-white" />
+                Analyzing...
+              </span>
+            ) : (
+              'Analyze for Scam Risk 🛡️'
+            )}
+          </button>
+        </div>
+
+        {/* Results Section */}
+        {result && (
+          <div className="animate-fade-in-up">
+            <TrustScore result={result} />
+          </div>
+        )}
+
+        <footer className="mt-20 text-center text-slate-600 text-sm">
+          <p>© 2025 TrustGuard AI. Hackathon Project.</p>
+        </footer>
       </div>
-
-      {/* Results Section */}
-      {result && <TrustScore result={result} />}
-
-      {/* Footer */}
-      <footer className="mt-20 text-center text-slate-600 text-sm">
-        <p>© 2025 TrustGuard AI. Hackathon Project.</p>
-        <p className="mt-1">Disclaimer: Scores are automated estimates. Always verify independently.</p>
-      </footer>
     </main>
   );
 }

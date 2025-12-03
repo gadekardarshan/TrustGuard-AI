@@ -71,7 +71,7 @@ Return JSON only in this format:
         }
 
         try:
-            response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=10)
             response.raise_for_status()
             
             data = response.json()

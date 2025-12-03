@@ -10,26 +10,25 @@ export interface AnalyzeResponse {
         context?: string;
         risk_factors?: string[];
         error?: string;
+        source?: string;
     };
 }
 
-export async function analyzeContent(url?: string, text?: string, linkedinUrl?: string): Promise<AnalyzeResponse> {
-    const response = await fetch(`${API_URL}/analyze`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            url: url || null,
-            text: text || null,
-            linkedin_profile_url: linkedinUrl || null,
-        }),
-    });
+export const analyzeScam = async (formData: FormData): Promise<AnalyzeResponse> => {
+    try {
+        const response = await fetch(`${API_URL}/analyze`, {
+            method: 'POST',
+            body: formData, // fetch automatically sets Content-Type to multipart/form-data
+        });
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Analysis failed');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || 'Analysis failed');
+        }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error("API Error:", error);
+        throw new Error(error.message || "Network error occurred");
     }
-
-    return response.json();
-}
+};
