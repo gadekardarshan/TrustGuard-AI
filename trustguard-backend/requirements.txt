@@ -5,5 +5,4 @@ requests
 python-dotenv
 tldextract
 pymongo
-pypdf
 python-multipart
