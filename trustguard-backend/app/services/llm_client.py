@@ -10,7 +10,7 @@ class LLMClient:
         # Using local LLM server (e.g., vLLM or similar)
         self.api_url = "http://127.0.0.1:8000/v1/chat/completions"
         self.model_id = "nvidia/nvidia-nemotron-nano-9b-v2"
-        self.api_key = "dummy" # Local server usually doesn't need a real key, or accepts any string
+        self.api_key = os.getenv("LLM_API_KEY", "dummy") # Use env key if present, else dummy
 
     def analyze(self, job_text: str, context: str = "") -> dict:
         """

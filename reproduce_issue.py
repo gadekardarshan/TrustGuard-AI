@@ -11,6 +11,9 @@ print("Testing Phishing Text Analysis...")
 try:
     response = requests.post(url, data=data)
     print(f"Status: {response.status_code}")
-    print("Response:", response.json())
+    try:
+        print("Response:", response.json())
+    except Exception:
+        print("Response (raw):", response.text.encode('utf-8'))
 except Exception as e:
     print(f"Error: {e}")
