@@ -1,23 +1,25 @@
 # TrustGuard AI 🛡️
 
-**TrustGuard AI** is an advanced scam detection platform designed to analyze job postings, messages, and websites. It uses a multi-layered approach combining **Rule-Based Heuristics**, **Domain Reputation Analysis**, and **LLM Semantic Analysis (GPT-5)** to provide a comprehensive Trust Score and detailed risk assessment.
+**TrustGuard AI** is an advanced scam detection platform designed to analyze job postings, messages, and websites. It uses a multi-layered approach combining **Rule-Based Heuristics**, **Domain Reputation Analysis**, and **Local LLM Semantic Analysis (Nvidia Nemotron)** to provide a comprehensive Trust Score and detailed risk assessment.
 
-![TrustGuard AI Demo](https://via.placeholder.com/800x400?text=TrustGuard+AI+Dashboard)
+![TrustGuard AI Dashboard](https://via.placeholder.com/800x400?text=TrustGuard+AI+Dashboard)
 
 ## 🚀 Key Features
 
 *   **🛡️ Multi-Layered Detection**: Combines regex rules, domain checks, and AI analysis.
-*   **🧠 Advanced AI Analysis**: Uses GPT-5 (via ModelsLab) to detect subtle scam patterns like hidden fees, vague descriptions, and manipulative language.
+*   **🧠 Local AI Analysis**: Integrated with **Nvidia Nemotron-4 9B** (running locally) for privacy-first, offline-capable scam detection.
+*   **📄 Resume Analysis**: Upload your PDF resume to check if a job matches your profile level.
+*   **🎣 Phishing Detection**: Specifically trained to flag "Security Alert" and "Unusual Login" phishing attempts.
 *   **⚡ Fail-Secure Logic**: Automatically flags high-risk keywords ("fake", "scam") with a 0 Trust Score.
+*   **✅ Strict Validation**: Enforces minimum text length (50 chars) and valid LinkedIn URLs to ensure quality analysis.
 *   **🔗 Domain Verification**: Checks if application links match the company's official domain.
-*   **💬 Messaging App Detection**: Flags suspicious requests to move conversation to Telegram or WhatsApp.
 *   **🎨 Modern UI**: Built with Next.js 14 and Tailwind CSS for a premium, glassmorphism-inspired experience.
 
 ## 🛠️ Tech Stack
 
 *   **Frontend**: Next.js 14, TypeScript, Tailwind CSS v4
-*   **Backend**: Python, FastAPI, Uvicorn
-*   **AI/LLM**: ModelsLab API (GPT-5 / Llama-3)
+*   **Backend**: Python, FastAPI, Uvicorn, PyPDF
+*   **AI/LLM**: Nvidia Nemotron-4 9B (Local Inference via vLLM/Ollama)
 *   **Tools**: Regex, TLDExtract, Pydantic
 
 ---
@@ -27,7 +29,7 @@
 ### Prerequisites
 *   **Python 3.9+** installed.
 *   **Node.js 18+** installed.
-*   **API Key**: You need a `MODELSLAB_API_KEY` for the AI features.
+*   **Local LLM Server**: You need a local LLM running on port `8000` (e.g., using vLLM or Ollama with `nvidia-nemotron`).
 
 ### 1️⃣ Backend Setup (FastAPI)
 
@@ -50,18 +52,13 @@
     pip install -r requirements.txt
     ```
 
-4.  Set up Environment Variables:
-    *   Create a `.env` file in the `trustguard-backend` folder.
-    *   Add your API key:
-        ```env
-        MODELSLAB_API_KEY=your_actual_api_key_here
-        ```
+4.  **Start Local LLM**: Ensure your local AI model is running at `http://127.0.0.1:8000`.
 
 5.  Run the Server:
     ```bash
-    python -m uvicorn app.main:app --reload --port 8080
+    python -m uvicorn app.main:app --reload --port 8081
     ```
-    *   The backend will start at `http://localhost:8080`.
+    *   The backend will start at `http://localhost:8081`.
 
 ### 2️⃣ Frontend Setup (Next.js)
 
@@ -89,14 +86,17 @@
 
 Try entering these sample inputs to see the detection in action:
 
-**1. Subtle Scam (Altera Finance)**
+**1. Phishing Attempt (New!)**
+> "Your account just logged in using a Windows device we haven't seen recently. Click the link below to verify this was you. If this wasn't you please change your password."
+
+**2. Subtle Scam (Altera Finance)**
 > "Job Title: Operations Assistant. Company: Altera Finance Group. Apply via: https://alterafinance-careers.com/apply. Once approved, contact our HR mentor on Telegram for mandatory orientation. Minor administrative charges may apply."
 
-**2. Obvious Scam**
-> "Earn ₹50,000/week! No experience needed. Just pay a refundable deposit of ₹1,499 to start working immediately. WhatsApp only."
+**3. Invalid Input (Validation Check)**
+> "Hello" (Will trigger a validation error for being too short)
 
-**3. Legit Job**
-> "Software Engineer at Microsoft. Apply via careers.microsoft.com. No fees required."
+**4. Legit Job**
+> "Software Engineer at Microsoft. Apply via careers.microsoft.com. No fees required. We are looking for a skilled developer with 5+ years of experience..."
 
 ---
 
