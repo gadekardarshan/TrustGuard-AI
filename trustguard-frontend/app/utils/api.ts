@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = 'http://localhost:8081';
 
 export interface AnalyzeResponse {
     trust_score: number;

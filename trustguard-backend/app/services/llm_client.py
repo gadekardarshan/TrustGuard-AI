@@ -7,13 +7,14 @@ load_dotenv()
 
 class LLMClient:
     def __init__(self):
-        self.api_key = os.getenv("MODELSLAB_API_KEY")
-        self.api_url = "https://modelslab.com/api/v7/llm/chat/completions"
-        self.model_id = "gpt-5"
+        # Using local LLM server (e.g., vLLM or similar)
+        self.api_url = "http://127.0.0.1:8000/v1/chat/completions"
+        self.model_id = "nvidia/nvidia-nemotron-nano-9b-v2"
+        self.api_key = "dummy" # Local server usually doesn't need a real key, or accepts any string
 
     def analyze(self, job_text: str, context: str = "") -> dict:
         """
-        Analyzes text using GPT-5 via ModelsLab API to detect scam patterns.
+        Analyzes text using local LLM to detect scam patterns.
         Returns a dictionary with structured risk flags and scam probability.
         """
         if not job_text:
@@ -32,11 +33,11 @@ class LLMClient:
             }
 
         prompt = f"""
-You are a job scam detection AI.
+You are a scam detection AI. You analyze text from job posts, emails, and messages to detect fraud.
 
-Analyze the following job description and return the findings in pure JSON only.
+Analyze the following text and return the findings in pure JSON only.
 
-Job description:
+Text to analyze:
 \"""{job_text}\"""
 
 Context (User Profile):
@@ -44,16 +45,18 @@ Context (User Profile):
 
 Evaluate the following:
 
-1. Are there hints of hidden fees or deposits?
-2. Does the application URL match the company name?
-3. Is the job using Telegram/WhatsApp for hiring?
-4. Is the salary unrealistic for the hours?
-5. Is the job description vague?
-6. Is the company identity unclear?
-7. Final scam probability score from 0 to 100 (0 = Safe, 100 = Scam).
+1. Is this a "Security Alert" or "Phishing" attempt (e.g., "verify account", "unusual login")?
+2. Are there hints of hidden fees or deposits?
+3. Does the application URL match the company name?
+4. Is the job using Telegram/WhatsApp for hiring?
+5. Is the salary unrealistic for the hours?
+6. Is the job description vague?
+7. Is the company identity unclear?
+8. Final scam probability score from 0 to 100 (0 = Safe, 100 = Scam).
 
 Return JSON only in this format:
 {{
+    "phishing_attempt": true/false,
     "hidden_fees": true/false,
     "domain_mismatch": true/false,
     "messaging_apps": true/false,
@@ -65,18 +68,21 @@ Return JSON only in this format:
 """
 
         payload = {
-            "key": self.api_key,
-            "model_id": self.model_id,
-            "messages": [{"role": "user", "content": prompt}]
+            "model": self.model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 512,
+            "temperature": 0.1
         }
 
         try:
-            response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=10)
+            response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=30)
             response.raise_for_status()
             
             data = response.json()
             content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
             
+            print(f"DEBUG LLM RAW RESPONSE: {content}") # Debug log
+
             # Clean content
             content = content.strip()
             if content.startswith("```json"):

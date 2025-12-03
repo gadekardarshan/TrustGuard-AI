@@ -44,9 +44,17 @@ async def analyze_scam(
     if not linkedin_url and not resume_file:
         raise HTTPException(status_code=400, detail="Please provide either a LinkedIn URL or upload a Resume PDF.")
 
-    # Validate Job Description Length (Max 20,000 chars)
-    if job_description and len(job_description) > 20000:
-        raise HTTPException(status_code=400, detail="Job description is too long (max 20,000 characters).")
+    # Validate Job Description Length
+    if job_description:
+        if len(job_description) < 50:
+            raise HTTPException(status_code=400, detail="Job description is too short. Please provide at least 50 characters for accurate analysis.")
+        if len(job_description) > 20000:
+            raise HTTPException(status_code=400, detail="Job description is too long (max 20,000 characters).")
+
+    # Validate LinkedIn URL
+    if linkedin_url:
+        if "linkedin.com" not in linkedin_url.lower():
+             raise HTTPException(status_code=400, detail="Invalid LinkedIn URL. Please provide a valid profile link (e.g., https://www.linkedin.com/in/...).")
 
     # 2. Resume PDF Handling
     resume_text = ""

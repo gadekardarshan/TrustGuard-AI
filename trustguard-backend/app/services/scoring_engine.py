@@ -6,6 +6,7 @@ class ScoringEngine:
         "low_hours_high_pay": 20,
         "vague_description": 10,
         "missing_manager_name": 5,
+        "phishing_attempt": 100, # Immediate Scam
     }
 
     def combine(self, rules, llm, domain_reputation_score):
@@ -13,6 +14,10 @@ class ScoringEngine:
         rule_score = sum(
             self.WEIGHTS[key] for key, val in rules.items() if val
         )
+        
+        # Add LLM-detected phishing flag to rule score (as it's a binary flag like rules)
+        if llm.get("phishing_attempt"):
+            rule_score += self.WEIGHTS["phishing_attempt"]
 
         # Use LLM's score directly
         llm_score = llm.get("llm_score", 0)

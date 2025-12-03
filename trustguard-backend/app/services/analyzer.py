@@ -68,6 +68,10 @@ class Analyzer:
         if rules_data["missing_manager_name"]: all_reasons.append("No hiring manager or recruiter name")
         
         # Map LLM flags to reasons
+        if llm_data.get("error"):
+            all_reasons.append("⚠️ AI Analysis Failed: Could not connect to local model. Results are based on rules only.")
+        
+        if llm_data.get("phishing_attempt"): all_reasons.append("AI detected PHISHING attempt (Security Alert Scam)")
         if llm_data.get("hidden_fees"): all_reasons.append("AI detected hidden fees")
         if llm_data.get("unrealistic_salary"): all_reasons.append("AI detected unrealistic salary")
         if llm_data.get("company_unclear"): all_reasons.append("AI detected unclear company identity")

@@ -20,8 +20,19 @@ export default function Home() {
       setError('Please provide either a Job URL or Job Description.');
       return;
     }
+
+    if (jobDescription && jobDescription.length < 50) {
+      setError('Job description is too short. Please provide at least 50 characters.');
+      return;
+    }
+
     if (!linkedinUrl && !resumeFile) {
       setError('Please provide either a LinkedIn URL or upload a Resume PDF.');
+      return;
+    }
+
+    if (linkedinUrl && !linkedinUrl.toLowerCase().includes('linkedin.com')) {
+      setError('Invalid LinkedIn URL. Please provide a valid profile link.');
       return;
     }
 
