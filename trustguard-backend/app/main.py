@@ -41,8 +41,9 @@ async def analyze_scam(
     if not job_url and not job_description:
         raise HTTPException(status_code=400, detail="Please provide either a Job URL or Job Description.")
     
-    if not linkedin_url and not resume_file:
-        raise HTTPException(status_code=400, detail="Please provide either a LinkedIn URL or upload a Resume PDF.")
+    # Removed mandatory check for LinkedIn/Resume as per user request
+    # if not linkedin_url and not resume_file:
+    #    raise HTTPException(status_code=400, detail="Please provide either a LinkedIn URL or upload a Resume PDF.")
 
     # Validate Job Description Length
     if job_description:

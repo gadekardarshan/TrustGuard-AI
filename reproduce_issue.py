@@ -3,11 +3,16 @@ import requests
 url = "http://localhost:8081/analyze"
 
 data = {
-    'job_description': "Hello,\n\nYour account just logged in using a(n) Windows device we haven't seen you use recently. Click the link below to verify this was you and continue to NVIDIA. If this wasn't you please change your password.",
-    'linkedin_url': 'https://www.linkedin.com/in/darshan-gadekar-b98'
+    "job_description": """
+    URGENT: Security Alert
+    Your account just logged in using a Windows device we haven't seen recently.
+    Click the link below to verify this was you.
+    If this wasn't you please change your password.
+    """
+    # No linkedin_url provided
 }
 
-print("Testing Phishing Text Analysis...")
+print("Testing Job-Only Analysis...")
 try:
     response = requests.post(url, data=data)
     print(f"Status: {response.status_code}")
