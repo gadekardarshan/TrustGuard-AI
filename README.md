@@ -1,24 +1,21 @@
 # TrustGuard AI 🛡️
 
-**TrustGuard AI** is an advanced scam detection platform designed to analyze job postings, messages, and websites. It uses a multi-layered approach combining **Rule-Based Heuristics**, **Domain Reputation Analysis**, and **Local LLM Semantic Analysis (Nvidia Nemotron)** to provide a comprehensive Trust Score and detailed risk assessment.
-
-![TrustGuard AI Dashboard](https://via.placeholder.com/800x400?text=TrustGuard+AI+Dashboard)
+**TrustGuard AI** is an advanced scam detection platform designed to analyze job postings and detect fraudulent listings. It uses a multi-layered approach combining **Rule-Based Heuristics**, **Domain Reputation Analysis**, and **Local LLM Semantic Analysis (Nvidia Nemotron)** to provide a comprehensive Trust Score and detailed risk assessment.
 
 ## 🚀 Key Features
 
 *   **🛡️ Multi-Layered Detection**: Combines regex rules, domain checks, and AI analysis.
 *   **🧠 Local AI Analysis**: Integrated with **Nvidia Nemotron-4 9B** (running locally) for privacy-first, offline-capable scam detection.
-*   **📄 Resume Analysis**: Upload your PDF resume to check if a job matches your profile level.
 *   **🎣 Phishing Detection**: Specifically trained to flag "Security Alert" and "Unusual Login" phishing attempts.
 *   **⚡ Fail-Secure Logic**: Automatically flags high-risk keywords ("fake", "scam") with a 0 Trust Score.
-*   **✅ Strict Validation**: Enforces minimum text length (50 chars) and valid LinkedIn URLs to ensure quality analysis.
+*   **✅ Strict Validation**: Enforces minimum text length (50 chars) for quality analysis.
 *   **🔗 Domain Verification**: Checks if application links match the company's official domain.
 *   **🎨 Modern UI**: Built with Next.js 14 and Tailwind CSS for a premium, glassmorphism-inspired experience.
 
 ## 🛠️ Tech Stack
 
 *   **Frontend**: Next.js 14, TypeScript, Tailwind CSS v4
-*   **Backend**: Python, FastAPI, Uvicorn, PyPDF
+*   **Backend**: Python, FastAPI, Uvicorn
 *   **AI/LLM**: Nvidia Nemotron-4 9B (Local Inference via vLLM/Ollama)
 *   **Tools**: Regex, TLDExtract, Pydantic
 
@@ -86,17 +83,14 @@
 
 Try entering these sample inputs to see the detection in action:
 
-**1. Phishing Attempt (New!)**
+**1. Phishing Attempt**
 > "Your account just logged in using a Windows device we haven't seen recently. Click the link below to verify this was you. If this wasn't you please change your password."
 
 **2. Subtle Scam (Altera Finance)**
 > "Job Title: Operations Assistant. Company: Altera Finance Group. Apply via: https://alterafinance-careers.com/apply. Once approved, contact our HR mentor on Telegram for mandatory orientation. Minor administrative charges may apply."
 
-**3. Invalid Input (Validation Check)**
-> "Hello" (Will trigger a validation error for being too short)
-
-**4. Legit Job**
-> "Software Engineer at Microsoft. Apply via careers.microsoft.com. No fees required. We are looking for a skilled developer with 5+ years of experience..."
+**3. Legit Job**
+> "Software Engineer at Microsoft. Apply via careers.microsoft.com. No fees required. We are looking for a skilled developer with 5+ years of experience in Python and React..."
 
 ---
 
