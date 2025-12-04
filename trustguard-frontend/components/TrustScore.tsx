@@ -1,31 +1,44 @@
 import React from 'react';
-import { AnalyzeResponse } from '@/app/utils/api';
-import { ShieldCheck, ShieldAlert, ShieldX, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { EnhancedAnalyzeResponse } from '@/app/utils/api';
+import { ShieldCheck, ShieldAlert, ShieldX, AlertTriangle, Building2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface TrustScoreProps {
-    result: AnalyzeResponse;
+    result: EnhancedAnalyzeResponse;
 }
 
 export default function TrustScore({ result }: TrustScoreProps) {
-    const { trust_score, label, reasons, recommended_action, user_analysis } = result;
+    const {
+        trust_score,
+        label,
+        reasons,
+        recommended_action,
+        company_verified,
+        company_trust_score,
+        company_name,
+        company_risk_factors,
+        combined_trust_score
+    } = result;
+
+    // Use combined score if available, otherwise use job score
+    const displayScore = combined_trust_score ?? trust_score;
 
     let colorClass = 'text-red-500';
     let bgClass = 'bg-red-500/10 border-red-500/20';
     let Icon = ShieldX;
 
-    if (trust_score >= 60) {
+    if (displayScore >= 60) {
         colorClass = 'text-green-500';
         bgClass = 'bg-green-500/10 border-green-500/20';
         Icon = ShieldCheck;
-    } else if (trust_score >= 30) {
+    } else if (displayScore >= 30) {
         colorClass = 'text-yellow-500';
         bgClass = 'bg-yellow-500/10 border-yellow-500/20';
         Icon = ShieldAlert;
     }
 
     return (
-        <div className="w-full max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-full max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Score Card */}
             <div className={clsx("p-6 rounded-2xl border backdrop-blur-sm", bgClass)}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -34,8 +47,19 @@ export default function TrustScore({ result }: TrustScoreProps) {
                             <Icon size={48} />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-bold text-slate-100">{trust_score}/100</h2>
+                            <h2 className="text-3xl font-bold text-slate-100">
+                                {displayScore}/100
+                                {company_verified && combined_trust_score && (
+                                    <span className="text-xs ml-2 text-cyan-400">(Combined)</span>
+                                )}
+                            </h2>
                             <p className={clsx("text-lg font-medium", colorClass)}>{label}</p>
+                            {company_verified && company_name && (
+                                <p className="text-sm text-slate-400 mt-1 flex items-center gap-1">
+                                    <Building2 size={14} />
+                                    {company_name}
+                                </p>
+                            )}
                         </div>
                     </div>
                     <div className="text-center md:text-right">
@@ -43,38 +67,58 @@ export default function TrustScore({ result }: TrustScoreProps) {
                         <div className="h-2 w-32 bg-slate-800 rounded-full overflow-hidden mx-auto md:ml-auto">
                             <div
                                 className={clsx("h-full transition-all duration-1000 ease-out", colorClass.replace('text-', 'bg-'))}
-                                style={{ width: `${trust_score}%` }}
+                                style={{ width: `${displayScore}%` }}
                             />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* User Context Analysis */}
-            {user_analysis && user_analysis.profile_found && (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-indigo-400 mb-3 flex items-center gap-2">
-                        <Info size={20} />
-                        Personalized Analysis
+            {/* Company Verification Section */}
+            {company_verified && company_trust_score !== undefined && (
+                <div className="bg-slate-900/50 border border-cyan-500/20 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-cyan-400 mb-3 flex items-center gap-2">
+                        <Building2 size={20} />
+                        Company Verification
                     </h3>
-                    <p className="text-slate-300 text-sm mb-4 italic border-l-2 border-indigo-500/50 pl-3">
-                        {user_analysis.context}
-                    </p>
-                    {user_analysis.risk_factors && user_analysis.risk_factors.length > 0 ? (
-                        <ul className="space-y-2">
-                            {user_analysis.risk_factors.map((factor, idx) => (
-                                <li key={idx} className="flex items-start gap-2 text-orange-300 text-sm">
-                                    <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-                                    <span>{factor}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-green-400 text-sm flex items-center gap-2">
-                            <CheckCircle size={16} />
-                            No specific profile mismatches found.
-                        </p>
-                    )}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-slate-300 text-sm">Company Trust Score</span>
+                            <span className={clsx(
+                                "text-lg font-semibold",
+                                company_trust_score >= 70 ? "text-green-400" :
+                                    company_trust_score >= 50 ? "text-yellow-400" : "text-red-400"
+                            )}>
+                                {company_trust_score}/100
+                            </span>
+                        </div>
+                        {trust_score !== displayScore && (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-300 text-sm">Job Posting Score</span>
+                                    <span className="text-slate-100 text-lg font-semibold">{trust_score}/100</span>
+                                </div>
+                                <div className="pt-2 border-t border-slate-700">
+                                    <p className="text-xs text-slate-400 italic">
+                                        Combined score weighs both job analysis (60%) and company verification (40%)
+                                    </p>
+                                </div>
+                            </>
+                        )}
+                        {company_risk_factors && company_risk_factors.length > 0 && (
+                            <div className="mt-4">
+                                <h4 className="text-sm font-medium text-slate-300 mb-2">Company Risk Factors:</h4>
+                                <ul className="space-y-2">
+                                    {company_risk_factors.slice(0, 5).map((factor: string, idx: number) => (
+                                        <li key={idx} className="flex items-start gap-2 text-orange-300 text-xs">
+                                            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                                            <span>{factor}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -83,7 +127,7 @@ export default function TrustScore({ result }: TrustScoreProps) {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Analysis Report</h3>
                     <ul className="space-y-3">
-                        {reasons.map((reason, idx) => (
+                        {reasons.map((reason: string, idx: number) => (
                             <li key={idx} className="flex items-start gap-2 text-slate-300 text-sm">
                                 <AlertTriangle size={16} className="mt-0.5 text-yellow-500 shrink-0" />
                                 <span>{reason}</span>

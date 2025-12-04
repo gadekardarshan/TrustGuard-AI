@@ -1,14 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { analyzeScam } from './utils/api';
+import { analyzeEnhanced, type EnhancedAnalyzeResponse } from './utils/api';
 import TrustScore from '@/components/TrustScore';
-import { ShieldCheck, Briefcase, AlertTriangle, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Briefcase, AlertTriangle, ArrowRight, Building2 } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Home() {
   const [jobUrl, setJobUrl] = useState('');
   const [jobDescription, setJobDescription] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [companyUrl, setCompanyUrl] = useState('');
+  const [result, setResult] = useState<EnhancedAnalyzeResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,10 +31,10 @@ export default function Home() {
     setResult(null);
 
     try {
-      const data = await analyzeScam(jobUrl, jobDescription);
+      const data = await analyzeEnhanced(jobUrl, jobDescription, companyUrl);
       setResult(data);
-    } catch (err) {
-      setError('Failed to analyze. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to analyze. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -112,6 +113,36 @@ export default function Home() {
                       <span className="text-red-400">Too short ({jobDescription.length}/50 chars)</span>
                     ) : (
                       "Paste the text if you don't have a URL."
+                    )}
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-[#1e293b] px-2 text-slate-500">OPTIONAL</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-cyan-400" />
+                    Company Website URL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://company.com"
+                    className="w-full bg-[#0f172a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                    value={companyUrl}
+                    onChange={(e) => setCompanyUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-slate-500 mt-2 ml-1">
+                    {companyUrl ? (
+                      <span className="text-cyan-400">✓ Company will be verified via web scraping</span>
+                    ) : (
+                      "Add company website to enable deeper verification"
                     )}
                   </p>
                 </div>

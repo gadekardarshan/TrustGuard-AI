@@ -1,13 +1,16 @@
-from app.models import AnalyzeRequest, AnalyzeResponse
+from app.models import AnalyzeRequest, AnalyzeResponse, EnhancedAnalyzeResponse, CompanyInfo
 from app.services.domain_checker import DomainChecker
 from app.services.rules_engine import RulesEngine
 from app.services.llm_client import LLMClient
+from app.services.company_analyzer import CompanyAnalyzer
+from typing import Optional
 
 class Analyzer:
     def __init__(self):
         self.domain_checker = DomainChecker()
         self.rules_engine = RulesEngine()
         self.llm_client = LLMClient()
+        self.company_analyzer = CompanyAnalyzer()
 
     def analyze(self, request: AnalyzeRequest) -> AnalyzeResponse:
         # 1. Domain Analysis
@@ -62,3 +65,84 @@ class Analyzer:
             reasons=list(set(all_reasons)),
             recommended_action="Proceed with caution." if score_result["final_score"] > 60 else "Do NOT pay or share personal details."
         )
+    
+    def analyze_with_company(self, job_data: AnalyzeRequest, company_url: Optional[str] = None) -> EnhancedAnalyzeResponse:
+        """
+        Enhanced analysis that includes company verification.
+        
+        Args:
+            job_data: Job posting data to analyze
+            company_url: Optional company website URL for verification
+        
+        Returns:
+            EnhancedAnalyzeResponse with job and company analysis
+        """
+        # First, do the standard job analysis
+        job_analysis = self.analyze(job_data)
+        
+        # Initialize response with job analysis results
+        response_data = {
+            "trust_score": job_analysis.trust_score,
+            "label": job_analysis.label,
+            "reasons": job_analysis.reasons,
+            "recommended_action": job_analysis.recommended_action,
+            "company_verified": False
+        }
+        
+        # If company URL provided, analyze the company
+        if company_url:
+            try:
+                company_result = self.company_analyzer.analyze_company_website(company_url)
+                
+                if company_result.get("success"):
+                    company_info = company_result.get("company_info", {})
+                    company_trust = company_result.get("company_trust_score", 0)
+                    
+                    # Create CompanyInfo object
+                    company_info_obj = CompanyInfo(**company_info) if company_info else None
+                    
+                    # Calculate combined trust score (60% job, 40% company)
+                    combined_score = int((job_analysis.trust_score * 0.6) + (company_trust * 0.4))
+                    
+                    # Update response with company data
+                    response_data.update({
+                        "company_verified": True,
+                        "company_trust_score": company_trust,
+                        "company_name": company_info.get("company_name", "Unknown"),
+                        "company_risk_factors": company_result.get("risk_factors", []),
+                        "combined_trust_score": combined_score
+                    })
+                    
+                    # Update label based on combined score
+                    if combined_score >= 70:
+                        response_data["label"] = "Low Risk (Verified)"
+                    elif combined_score >= 50:
+                        response_data["label"] = "Medium Risk (Verified)"
+                    elif combined_score >= 30:
+                        response_data["label"] = "High Risk (Verified)"
+                    else:
+                        response_data["label"] = "Critical Risk (Verified)"
+                    
+                    # Add company insights to reasons
+                    if company_trust < 50:
+                        response_data["reasons"].append(f"⚠️ Company website shows low legitimacy (Trust: {company_trust}/100)")
+                    elif company_trust >= 70:
+                        response_data["reasons"].append(f"✓ Company website appears legitimate (Trust: {company_trust}/100)")
+                    
+                    # Update recommended action based on combined analysis
+                    if combined_score >= 60:
+                        response_data["recommended_action"] = "Company verified - proceed with normal caution."
+                    else:
+                        response_data["recommended_action"] = "CAUTION: Both job and company show risk factors. Do NOT share personal details or pay fees."
+                
+                else:
+                    # Company analysis failed
+                    response_data["reasons"].append(f"⚠️ Could not verify company website: {company_result.get('error', 'Unknown error')}")
+                    
+            except Exception as e:
+                # Handle company analysis errors gracefully
+                print(f"Company analysis error: {str(e)}")
+                response_data["reasons"].append("⚠️ Company verification failed - error during analysis")
+        
+        return EnhancedAnalyzeResponse(**response_data)
+
