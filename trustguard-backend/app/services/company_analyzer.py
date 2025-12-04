@@ -51,6 +51,24 @@ class CompanyAnalyzer:
         # Calculate company trust score
         trust_score = self._calculate_company_trust_score(legitimacy, llm_analysis)
         
+        # Merge LLM profile data into company info
+        if llm_analysis.get("company_profile"):
+            profile = llm_analysis.get("company_profile", {})
+            company_info.update({
+                "industry": profile.get("industry", "Unknown"),
+                "employee_count": profile.get("employee_count", "Unknown"),
+                "company_type": profile.get("company_type", "Unknown"),
+                "revenue": profile.get("revenue", "Unknown"),
+                "location": profile.get("location", "Unknown"),
+                "founding_year": profile.get("founding_year", "Unknown"),
+                "tagline": profile.get("tagline", "")
+            })
+        
+        # Add timeline and social stats
+        company_info["timeline"] = llm_analysis.get("timeline", [])
+        if llm_analysis.get("social_media_stats"):
+            company_info["social_media_stats"] = llm_analysis.get("social_media_stats", [])
+
         return {
             "success": True,
             "company_info": company_info,
@@ -83,6 +101,22 @@ class CompanyAnalyzer:
             "facebook": bool(re.search(r'facebook\.com/', content, re.I)),
         }
         
+        # Regex fallbacks for enhanced fields
+        founding_year = "Unknown"
+        year_match = re.search(r'(?:founded|established|started)\s+(?:in\s+)?(\d{4})', content, re.I)
+        if year_match:
+            founding_year = year_match.group(1)
+            
+        location = "Unknown"
+        loc_match = re.search(r'(?:headquartered|based|located)\s+in\s+([A-Z][a-zA-Z\s,]+)(?:\.|,)', content)
+        if loc_match:
+            location = loc_match.group(1).strip()
+            
+        employee_count = "Unknown"
+        emp_match = re.search(r'(\d+(?:,\d+)?\+?)\s+employees', content, re.I)
+        if emp_match:
+            employee_count = emp_match.group(1)
+
         return {
             "domain": domain,
             "company_name": company_name,
@@ -90,7 +124,17 @@ class CompanyAnalyzer:
             "emails": emails,
             "phones": phones,
             "social_media": social_links,
-            "has_contact_info": bool(emails or phones)
+            "has_contact_info": bool(emails or phones),
+            # Initialize enhanced fields with fallbacks
+            "industry": "Unknown",
+            "employee_count": employee_count,
+            "company_type": "Unknown",
+            "revenue": "Unknown",
+            "location": location,
+            "founding_year": founding_year,
+            "tagline": "",
+            "social_media_stats": [],
+            "timeline": []
         }
     
     def _check_legitimacy_indicators(self, markdown: str, html: str, url: str) -> Dict[str, Any]:
@@ -153,7 +197,7 @@ class CompanyAnalyzer:
         truncated_content = content[:max_length] if len(content) > max_length else content
         
         prompt = f"""
-Analyze this company website content and assess its legitimacy.
+Analyze this company website content and provide a detailed profile and legitimacy assessment.
 
 Website URL: {url}
 
@@ -161,11 +205,10 @@ Content:
 \"\"\"{truncated_content}\"\"\"
 
 Evaluate and return JSON with:
-1. Is this a legitimate, professional company website?
-2. Does it appear to be a scam or fraudulent operation?
-3. Are there red flags (vague info, poor grammar, unrealistic claims)?
-4. Does the company provide clear information about their business?
-5. Overall legitimacy score (0-100, where 100 = highly legitimate)
+1. Legitimacy Assessment (Score 0-100, Fraud/Scam indicators)
+2. Company Profile (Industry, Employee Count, Revenue, Type, Location, Founding Year, Tagline)
+3. Social Media Stats (Estimate follower counts if mentioned, e.g., "10k+ followers")
+4. Company Timeline (Chronological list of major events/milestones found in text)
 
 Return JSON only:
 {{
@@ -174,7 +217,23 @@ Return JSON only:
     "has_red_flags": true/false,
     "provides_clear_info": true/false,
     "legitimacy_score": number,
-    "key_observations": ["observation1", "observation2"]
+    "key_observations": ["observation1", "observation2"],
+    "company_profile": {{
+        "industry": "string",
+        "employee_count": "string (e.g. '1000-5000')",
+        "company_type": "string (Public/Private)",
+        "revenue": "string (e.g. '$10M+')",
+        "location": "string",
+        "founding_year": "string",
+        "tagline": "string"
+    }},
+    "social_media_stats": [
+        {{"platform": "LinkedIn", "url": "string", "followers": "string"}},
+        {{"platform": "Twitter", "url": "string", "followers": "string"}}
+    ],
+    "timeline": [
+        {{"year": "YYYY", "event": "Description of event"}}
+    ]
 }}
 """
         
@@ -183,16 +242,23 @@ Return JSON only:
             # Note: We're reusing the analyze method but with a custom prompt
             import requests
             import json
+            import os
             
-            api_url = "http://127.0.0.1:8000/v1/chat/completions"
+            api_key = os.getenv("LLM_API_KEY", "")
+            api_url = "https://integrate.api.nvidia.com/v1/chat/completions"
             payload = {
-                "model": "nvidia/nvidia-nemotron-nano-9b-v2",
+                "model": "mistralai/mixtral-8x7b-instruct-v0.1",
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 512,
                 "temperature": 0.1
             }
             
-            response = requests.post(api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=30)
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            }
+            
+            response = requests.post(api_url, json=payload, headers=headers, timeout=30)
             response.raise_for_status()
             
             data = response.json()

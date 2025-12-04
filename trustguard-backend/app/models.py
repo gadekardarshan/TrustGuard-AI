@@ -20,6 +20,17 @@ class CompanyInfo(BaseModel):
     phones: List[str]
     social_media: Dict[str, bool]
     has_contact_info: bool
+    
+    # New enhanced fields
+    industry: Optional[str] = "Unknown"
+    employee_count: Optional[str] = "Unknown"
+    company_type: Optional[str] = "Unknown"
+    revenue: Optional[str] = "Unknown"
+    location: Optional[str] = "Unknown"
+    founding_year: Optional[str] = "Unknown"
+    tagline: Optional[str] = ""
+    social_media_stats: Optional[List[Dict[str, Any]]] = []
+    timeline: Optional[List[Dict[str, str]]] = []
 
 class CompanyAnalysisRequest(BaseModel):
     company_url: str
@@ -50,6 +61,7 @@ class EnhancedAnalyzeResponse(BaseModel):
     company_trust_score: Optional[int] = None
     company_name: Optional[str] = None
     company_risk_factors: Optional[List[str]] = None
+    company_info: Optional[CompanyInfo] = None
     
     # Combined analysis
     combined_trust_score: Optional[int] = None  # Weighted average if company analyzed

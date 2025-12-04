@@ -7,9 +7,9 @@ load_dotenv()
 
 class LLMClient:
     def __init__(self):
-        # Using local LLM server (e.g., vLLM or similar)
-        self.api_url = "http://127.0.0.1:8000/v1/chat/completions"
-        self.model_id = "nvidia/nvidia-nemotron-nano-9b-v2"
+        # Using Nvidia NIM Cloud API
+        self.api_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+        self.model_id = "mistralai/mixtral-8x7b-instruct-v0.1"
         self.api_key = os.getenv("LLM_API_KEY", "dummy") # Use env key if present, else dummy
 
     def analyze(self, job_text: str, context: str = "") -> dict:
@@ -75,7 +75,11 @@ Return JSON only in this format:
         }
 
         try:
-            response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=30)
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            response = requests.post(self.api_url, json=payload, headers=headers, timeout=30)
             response.raise_for_status()
             
             data = response.json()

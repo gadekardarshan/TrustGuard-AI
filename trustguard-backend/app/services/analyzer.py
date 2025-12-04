@@ -110,7 +110,8 @@ class Analyzer:
                         "company_trust_score": company_trust,
                         "company_name": company_info.get("company_name", "Unknown"),
                         "company_risk_factors": company_result.get("risk_factors", []),
-                        "combined_trust_score": combined_score
+                        "combined_trust_score": combined_score,
+                        "company_info": company_info_obj
                     })
                     
                     # Update label based on combined score

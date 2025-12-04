@@ -20,6 +20,24 @@ export interface CompanyInfo {
         facebook: boolean;
     };
     has_contact_info: boolean;
+
+    // New enhanced fields
+    industry?: string;
+    employee_count?: string;
+    company_type?: string;
+    revenue?: string;
+    location?: string;
+    founding_year?: string;
+    tagline?: string;
+    social_media_stats?: Array<{
+        platform: string;
+        url: string;
+        followers: string;
+    }>;
+    timeline?: Array<{
+        year: string;
+        event: string;
+    }>;
 }
 
 export interface CompanyAnalysisResponse {
@@ -41,6 +59,7 @@ export interface EnhancedAnalyzeResponse {
     company_name?: string;
     company_risk_factors?: string[];
     combined_trust_score?: number;
+    company_info?: CompanyInfo;
 }
 
 // API Methods

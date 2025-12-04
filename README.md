@@ -1,6 +1,6 @@
 # TrustGuard AI 🛡️
 
-**TrustGuard AI** is an advanced job scam detection platform that analyzes job postings and verifies companies using multi-layered AI analysis. Combining **rule-based heuristics**, **domain reputation checking**, **company verification via web scraping**, and **local LLM semantic analysis (Nvidia Nemotron)**, it provides comprehensive trust scores and risk assessments to protect job seekers from fraudulent listings.
+**TrustGuard AI** is an advanced job scam detection platform that analyzes job postings and verifies companies using multi-layered AI analysis. Combining **rule-based heuristics**, **domain reputation checking**, **company verification via web scraping**, and **Nvidia NIM Cloud AI semantic analysis**, it provides comprehensive trust scores and risk assessments to protect job seekers from fraudulent listings.
 
 ## 🚀 Key Features
 
@@ -13,7 +13,7 @@
     - AI-powered legitimacy analysis
 *   **📊 Combined Trust Scoring**: Weighs both job posting analysis (60%) and company verification (40%) for comprehensive risk assessment
 *   **🔍 Automatic Company Detection**: Extracts company names from job descriptions and automatically finds company websites
-*   **🧠 Local AI Analysis**: Integrated with **Nvidia Nemotron-4 9B** for privacy-first, offline-capable scam detection
+*   **🧠 Nvidia Cloud AI Analysis**: Integrated with **Nvidia NIM (Mixtral 8x7B)** for powerful, cloud-based scam detection
 *   **🎣 Phishing Detection**: Flags "Security Alert" and "Unusual Login" phishing attempts
 *   **⚡ Fail-Secure Logic**: Automatically flags high-risk keywords ("fake", "scam") with 0 trust score
 *   **✅ Strict Validation**: Enforces minimum text length (50 chars) for quality analysis
@@ -24,7 +24,7 @@
 
 ### Backend
 *   **Framework**: Python, FastAPI, Uvicorn
-*   **AI/LLM**: Nvidia Nemotron-4 9B (Local Inference via vLLM/Ollama)
+*   **AI/LLM**: Nvidia NIM Cloud API (Mistral 8x7B Instruct)
 *   **Web Scraping**: Firecrawl.dev API for company verification
 *   **Libraries**: Pydantic, BeautifulSoup4, TLDExtract, Validators
 
@@ -42,7 +42,7 @@
 *   **Python 3.9+** installed
 *   **Node.js 18+** installed
 *   **Firecrawl API Key**: Get free key from [firecrawl.dev](https://www.firecrawl.dev/)
-*   **Local LLM Server**: Local AI model running on port `8000` (e.g., vLLM or Ollama with `nvidia-nemotron`)
+*   **Nvidia API Key**: Get key from [build.nvidia.com](https://build.nvidia.com/)
 
 ### 1️⃣ Backend Setup (FastAPI)
 
@@ -74,10 +74,10 @@
     
     # Edit .env and add your keys:
     # FIRECRAWL_API_KEY=your_api_key_here
-    # LLM_API_KEY=dummy
+    # LLM_API_KEY=nvapi-... (Nvidia NIM Key)
     ```
 
-5.  **Start Local LLM**: Ensure your local AI model is running at `http://127.0.0.1:8000`
+5.  **Start Backend**:
 
 6.  **Run the server:**
     ```bash
@@ -263,7 +263,7 @@ Combined Score = (Job × 0.6) + (Company × 0.4)
 
 ## 🔒 Privacy & Security
 
-*   **Local AI Processing**: All semantic analysis runs on local Nvidia Nemotron model
+*   **Nvidia Cloud AI**: Semantic analysis runs on secure Nvidia NIM Cloud API
 *   **No Data Collection**: Job descriptions are not stored or transmitted to third parties
 *   **Open Source**: Full transparency with publicly available code
 *   **API Key Security**: Environment variables for sensitive credentials
@@ -275,7 +275,7 @@ Combined Score = (Job × 0.6) + (Company × 0.4)
 *   **Job Board URLs**: LinkedIn, Indeed, and Glassdoor block automated scraping
     - **Workaround**: Copy job descriptions manually
 *   **Rate Limiting**: Firecrawl API has usage limits
-*   **LLM Dependency**: Requires local AI model for semantic analysis
+*   **API Dependency**: Requires valid Nvidia API key for semantic analysis
 
 ---
 
@@ -311,7 +311,7 @@ This project is open-source and available under the MIT License.
 ## 🙏 Acknowledgments
 
 *   **Firecrawl.dev** - Web scraping API
-*   **Nvidia Nemotron** - Local LLM for semantic analysis
+*   **Nvidia NIM** - Cloud AI for semantic analysis
 *   **FastAPI** - Modern Python web framework
 *   **Next.js** - React framework
 
